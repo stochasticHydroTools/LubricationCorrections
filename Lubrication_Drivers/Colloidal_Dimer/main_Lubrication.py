@@ -16,10 +16,9 @@ from sksparse.cholmod import cholesky
 # Find project functions
 found_functions = False
 path_to_append = ''
-sys.path.append('../Lubrication')
+sys.path.append('../../Lubrication')
 while found_functions is False:
     try:
-        from Lubrication import Lubrication
         from Lub_Solver import Lub_Solver as LS
         from stochastic_forcing import stochastic_forcing as stochastic
         from mobility import mobility as mb
@@ -37,9 +36,8 @@ while found_functions is False:
         print
         'searching functions in path ', path_to_append
         sys.path.append(path_to_append)
-        if len(path_to_append) > 21:
-            print
-            '\nProjected functions not found. Edit path in multi_bodies.py'
+        if len(path_to_append) > 31:
+            print '\nProjected functions not found. Edit path'
             sys.exit()
 
 if __name__ == '__main__':

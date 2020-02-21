@@ -95,7 +95,7 @@ class Lub_Solver(object):
   
   def Set_R_Mats(self, r_vecs_np=None):
     '''
-    Compute lubrication matricees in spase csc format
+    Set lubrication matricees in sparse csc format for the class members
     '''
     start = time.time()
     if r_vecs_np is None:
@@ -168,7 +168,7 @@ class Lub_Solver(object):
  
   def Compute_DeltaR(self, r_vecs_np):
     '''
-    Compute lubrication matricees in spase csc format
+    Return lubrication matricees in sparse csc format
     '''
     start = time.time()
     if r_vecs_np is None:
@@ -240,7 +240,7 @@ class Lub_Solver(object):
  
   def Wall_Mobility_Mult(self, X, r_vecs_np=None):
     '''
-    Return the lubrication matrix for bodies given a method for the pair resistance
+    Multiply a vector X  of forces and torques by the RPB mobility. X should be formatted according to [F_1 T_1 F_2 T_2 ...]^{T} 
     '''
     start = time.time()
     if r_vecs_np is None:
@@ -265,6 +265,9 @@ class Lub_Solver(object):
     return out
     
   def Lub_Mobility_RFD_RHS(self):
+    '''
+    Computes the RHS for a Lubrication Corrected Euler Maruyama scheme. Two RHS vectors are returned to be used in the function Lubrucation_solve
+    '''
     r_vecs_np = [b.location for b in self.bodies]
     r_vecs = self.put_r_vecs_in_periodic_box(r_vecs_np,self.periodic_length)
     
@@ -298,6 +301,9 @@ class Lub_Solver(object):
     
 
   def Lub_Mobility_Centered_RFD(self, W = None):
+    '''
+    Uses dense linear algebra and centered RFD to compute the divergence of the Lub. corrected mobility 
+    '''
     r_vecs_np = [b.location for b in self.bodies]
     r_vecs = self.put_r_vecs_in_periodic_box(r_vecs_np,self.periodic_length)
     if W is None:
@@ -320,58 +326,11 @@ class Lub_Solver(object):
     
     RFD = (1.0/self.delta)*(Mp-Mm)
     
-    fu_temp = copy.deepcopy(RFD)
-    RFD = np.zeros(12)
-    for i in range(12):
-      RFD[i] = fu_temp[0,i]
-    
     return RFD
   
   def Lub_Mobility_Root_RHS(self, print_res=False):
     '''
-    Return the lubrication matrix for bodies given a method for the pair resistance
-    '''
-    Dim = self.Delta_R.shape[1]
-    
-    W1 = np.transpose(np.random.randn(1, Dim))
-    W2 = np.transpose(np.random.randn(1, Dim))
-    
-    start = time.time()
-    small = 6.0*np.pi*self.eta*self.a*self.tolerance
-    Eig_Shift_DR_cut = self.Delta_R_cut + sp.diags(small*np.ones(Dim),0,format='csc')
-    factor = cholesky(Eig_Shift_DR_cut)
-    DRL = factor.L()
-    DRhalf = factor.apply_Pt(DRL.dot(W1))
-    end = time.time()
-    #print 'time for DR root: '+ str((end - start)) 
-    
-    
-    
-    start = time.time()
-    def CUT(v):
-      Mv = self.Wall_Mobility_Mult(v)
-      DRMv =  self.Delta_R_cut_wall.dot(Mv)
-      MDRMv = self.Wall_Mobility_Mult(DRMv)
-      return Mv+MDRMv
-    
-    WallCutHalf, it_lanczos = stochastic.stochastic_forcing_lanczos(factor = 1.0,
-                                                                    tolerance = 10*self.tolerance, 
-                                                                    dim = Dim, 
-                                                                    mobility_mult = CUT,
-                                                                    L_mult = None,
-                                                                    print_residual = print_res, 
-                                                                    z=W2)
-    end = time.time()
-    #print 'time for M + MDRM root: '+ str((end - start))
-    
-    RHS_Xm = np.sqrt(2*self.kT / self.dt)*(DRhalf)
-    RHS_X = np.sqrt(2*self.kT / self.dt)*(WallCutHalf)
-    
-    return RHS_Xm, RHS_X
-  
-  def Lub_Mobility_Root_RHS_no_cut(self, print_res=False):
-    '''
-    Return the lubrication matrix for bodies given a method for the pair resistance
+    Returns both DR^{1/2} and M_RPY^{1/2} to be used in the function Lubrucation_solve to compute the square root of the lubrication corrected mobility
     '''
     Dim = self.Delta_R.shape[1]
     
@@ -410,7 +369,7 @@ class Lub_Solver(object):
   
   def IpMDR_Mult(self, X):
     '''
-    Return the lubrication matrix for bodies given a method for the pair resistance
+    Returns (I + M_RPY*DR)*X
     '''
     start = time.time()
     D_R = self.Delta_R.dot(X) 
@@ -428,7 +387,7 @@ class Lub_Solver(object):
   
   def IpMDR_PC(self, X, R_fact=None, isolated=[]):
     '''
-    methods:
+    Returns (R_fact)^{-1}*X except for particles in the isolated set, which just return X
     '''
     start = time.time()
     
@@ -448,7 +407,7 @@ class Lub_Solver(object):
   
   def IpMDR_Swan_PC(self, X, R_fact=None):
     '''
-    methods:
+    Returns (R_fact)^{-1}*X
     '''
     start = time.time()
     
@@ -463,7 +422,7 @@ class Lub_Solver(object):
   
   def IpDRM_Mult(self, X):
     '''
-    Return the lubrication matrix for bodies given a method for the pair resistance
+    Returns (I + DR*M_RPY)*X
     '''
      
     
@@ -476,7 +435,7 @@ class Lub_Solver(object):
   
   def IpDRM_PC(self, X, R_fact=None):
     '''
-    methods:
+    Returns R_MB*(R_fact)^{-1}*X
     '''
     R_inv_X = R_fact(X)
     Y_F = self.R_MB.dot(R_inv_X)
@@ -485,7 +444,7 @@ class Lub_Solver(object):
   
   def Lubrucation_RFD_solve(self, X, X0=None, print_residual=False, its_out = 1000, PC_flag=True):
     '''
-    Solve the lubrication problem for bodies
+    Solve the transposed lubrication problem for bodies to get a random vector to be used in the Euler Maruyama mathod. 
     '''
     if(self.Delta_R is None):
       self.Set_R_Mats()
@@ -522,7 +481,8 @@ class Lub_Solver(object):
   
   def Lubrucation_solve(self, X, Xm, X0=None, print_residual=False, its_out = 1000, PC_flag=True):
     '''
-    Solve the lubrication problem for bodies
+    Solve the lubrication problem for bodies using GMRES. Computes the solution U = [I + M_RPY*DR]^{-1} * (X + M*Xm).
+    The PC ignores 'Isolated particles' which are those that are far from the wall and other particcles (making the PC less efective)
     '''
     if(self.Delta_R is None):
       self.Set_R_Mats()
@@ -601,6 +561,9 @@ class Lub_Solver(object):
     return U_gmres, res_list#
 
   def Form_Lub_Mobility(self):
+    '''
+    Computes the Lubrication corrected mobility from self.bodies using ittereative linear algebra
+    '''
     Dim = self.Delta_R.shape[1]
     I = np.eye(Dim)
     Mob = np.zeros((Dim,Dim))
@@ -610,6 +573,9 @@ class Lub_Solver(object):
     return Mob
 
   def Form_Mobility(self,r_vecs):
+    '''
+    Computes the RPY mobility
+    '''
     Dim = self.Delta_R.shape[1]
     I = np.eye(Dim)
     Mob = np.zeros((Dim,Dim))
@@ -619,6 +585,9 @@ class Lub_Solver(object):
     return Mob
   
   def Form_Lub_Mobility_Dense(self,r_vecs):
+    '''
+    Computes the Lubrication corrected mobility from r_vecs using dense linear algebra
+    '''
     M = self.Form_Mobility(r_vecs)
     Minv = np.linalg.pinv(M)
     DR = self.Compute_DeltaR(list(r_vecs))
@@ -628,6 +597,9 @@ class Lub_Solver(object):
 
   
   def Stochastic_Velocity_From_FT(self, FT):
+    '''
+    Performs one step of Euler Maruyama using lubrication corrections and ittereative linear algebra
+    '''
     if self.kT > 0:
       Root_Xm, Root_X = self.Lub_Mobility_Root_RHS()
       Root_X = Root_X[:,np.newaxis]
@@ -647,7 +619,10 @@ class Lub_Solver(object):
     vel, res = self.Lubrucation_solve(X = RHS_X, Xm = RHS_Xm)
     return vel
   
-  def Stochastic_Velocity_From_FT_centered_RFD(self, FT):    
+  def Stochastic_Velocity_From_FT_centered_RFD(self, FT): 
+    '''
+    Performs one step of Euler Maruyama using lubrication corrections and dense linear algebra for the RFD
+    '''
     Root_Xm, Root_X = self.Lub_Mobility_Root_RHS()
     Root_X = Root_X[:,np.newaxis]
  
@@ -667,6 +642,9 @@ class Lub_Solver(object):
   
   
   def Stochastic_Velocity_From_FT_no_lub(self, FT):
+    '''
+    Performs one step of Euler Maruyama WITHOUT using lubrication corrections (just RPY)
+    '''
     r_vecs_np = [b.location for b in self.bodies]
     r_vecs = self.put_r_vecs_in_periodic_box(r_vecs_np,self.periodic_length)
     W = np.random.randn(6*r_vecs.shape[0],1)
@@ -700,6 +678,9 @@ class Lub_Solver(object):
   
   
   def Update_Bodies(self, FT):
+    '''
+    Updates the positions and orientations of the bodies using stochastic velocity from Euler Maruyama (computed from `Stochastic_Velocity_From_FT')
+    '''
     velocities = self.Stochastic_Velocity_From_FT(FT)
     for k, b in enumerate(self.bodies):
         b.location_new = b.location + velocities[6*k:6*k+3] * self.dt
@@ -709,9 +690,8 @@ class Lub_Solver(object):
     
     reject_wall = 0
     reject_jump = 0
-    #reject_wall, reject_jump = self.Check_Update()
+
     reject_wall, reject_jump = self.Check_Update_With_Jump()
-    #reject = self.Check_Update_inter_particle()
     self.num_rejections_wall += reject_wall
     self.num_rejections_jump += reject_jump
     
@@ -727,6 +707,12 @@ class Lub_Solver(object):
   
   
   def Update_Bodies_Trap(self, FT_calc, Omega=None, Out_Torque=False):
+    '''
+    Updates the positions and orientations of the bodies using stochastic velocity from Trapezoidal scheme. 
+    If Omega is not NONE, a torque is computed based on the forces so that the angular velocity of the particles 
+    is approximatly constrained to be = Omega. If Out_Torque is set to true, Omega is not NONE, the constraining torque
+    will be returned
+    '''
     L = self.periodic_length
     # Save initial configuration
     for k, b in enumerate(self.bodies):
@@ -753,12 +739,12 @@ class Lub_Solver(object):
       FT = np.reshape(FTrs,(6*len(self.bodies),1))
       
     # compute relevant matrix root for pred. and corr. steps
-    #Mhalf = self.Lub_Mobility_Root_RHS_no_cut()
+    #Mhalf = self.Lub_Mobility_Root_RHS()
     #Mhalf = Mhalf.flatten()
     #Mhalf = Mhalf[:,np.newaxis]
     
     start = time.time()
-    Root_Xm, Root_X = self.Lub_Mobility_Root_RHS_no_cut() #self.Lub_Mobility_Root_RHS() #
+    Root_Xm, Root_X = self.Lub_Mobility_Root_RHS() #self.Lub_Mobility_Root_RHS() #
     X = Root_X[:,np.newaxis]
     MXm = self.Wall_Mobility_Mult(Root_Xm)
     MXm = MXm[:,np.newaxis]
@@ -849,14 +835,18 @@ class Lub_Solver(object):
         b.orientation = copy.copy(b.orientation_old)
 
 	
-
     self.Set_R_Mats() ######## VERY IMPORTANT
+    
     if Out_Torque:
       return reject_wall, reject_jump, T_omega.flatten()
     else:
       return reject_wall, reject_jump
   
   def Torque_from_Omega(self,Om,F):
+    '''
+    Given an angular velocity Om, a torque is computed based on the forces (F) so that the angular velocity of the particles 
+    is approximatly constrained to be = Om*y_hat.
+    '''
     r_vecs_np = [b.location for b in self.bodies]
     r_vecs = self.put_r_vecs_in_periodic_box(r_vecs_np,self.periodic_length)
     
@@ -892,6 +882,7 @@ class Lub_Solver(object):
     A = spla.LinearOperator((6*len(self.bodies), 6*len(self.bodies)), matvec = V_T_Mat_Mult, dtype='float64')
 
     ############### PC 1 ############
+    # Get the tt and rt blocks of DR
     ttInd = np.zeros((len(self.bodies),6))
     ttInd[:,0:3] = 1 
     ttInd = np.nonzero(ttInd.flatten())[0]
@@ -927,12 +918,14 @@ class Lub_Solver(object):
     if RHS_norm > 0:
       RHS = RHS / RHS_norm
 
+    # use 8*pi*eta*a^3*Omega as initial guess for torque
     Om_g = np.zeros((len(self.bodies),3))
     Om_g[:,1] += Om
     T_g = c2*Om_g
     V_g = 0*T_g
     X0_vt = np.concatenate((V_g, T_g), axis=1).flatten()
     X0_vt *= (1.0/RHS_norm)
+    
     # Solve linear system 
     res_list = []
     (VT_gmres, info_precond) = pyamg.krylov.gmres(A, RHS, M=PC, x0 = X0_vt, tol=self.tolerance, maxiter=100, restrt = min(100,A.shape[0]),residuals=res_list)
@@ -952,6 +945,9 @@ class Lub_Solver(object):
   
   
   def Update_Bodies_no_lub(self, FT_calc):
+    '''
+    Euler Maruyama method with no lubrication corrections (just RPY)
+    '''
     r_vecs_np = [b.location for b in self.bodies]
     r_vecs = self.put_r_vecs_in_periodic_box(r_vecs_np,self.periodic_length)
     FT = FT_calc(self.bodies, r_vecs)
@@ -979,6 +975,9 @@ class Lub_Solver(object):
     return reject_wall, reject_jump
         
   def Check_Update_With_Jump_Trap(self):
+    '''
+    Make sure particle dont move too much durung a step. if they do, mark that step for rejection.
+    '''
     r_vecs = [b.location_new for b in self.bodies]
     r_vecs_old = [b.location_old for b in self.bodies]
     num_particles = len(r_vecs)
@@ -1004,6 +1003,9 @@ class Lub_Solver(object):
  
  
   def Check_Update_With_Jump(self):
+    '''
+    Make sure particle dont move too much durung a step. if they do, mark that step for rejection.
+    '''
     r_vecs = [b.location_new for b in self.bodies]
     r_vecs_old = [b.location for b in self.bodies]
     num_particles = len(r_vecs)
@@ -1026,49 +1028,3 @@ class Lub_Solver(object):
 	return reject_wall, reject_jump
       
     return reject_wall, reject_jump
- 
-  def Check_Update_inter_particle(self):
-    r_vecs = [b.location_new for b in self.bodies]
-    r_vecs_old = [b.location for b in self.bodies]
-    num_particles = len(r_vecs)
-    r_tree = spatial.cKDTree(np.array(r_vecs),boxsize=self.periodic_length)
-    reject = 0
-    for j in range(num_particles):
-      s1 = r_vecs[j]
-      if s1[2] < self.a:
-	print "rejected time step"
-	reject = 1
-	return reject
-      
-      s1_old = r_vecs_old[j]
-      disp = np.linalg.norm(s1-s1_old)
-      if disp > self.a:
-	print "rejected time step"
-	reject = 1
-	return reject
-      
-      idx = r_tree.query_ball_point(s1,r=self.cutoff*self.a)
-      idx_trim = [i for i in idx if i > j]
-      for k in idx_trim:
-	s2 = r_vecs[k]
-	r_norm = np.linalg.norm(s1-s2)
-	if r_norm < 2*self.a:
-	  print "rejected time step"
-	  reject = 1
-	  return reject
-    return reject
- 
- 
- 
-  def Check_Update(self):
-    r_vecs = [b.location_new for b in self.bodies]
-    num_particles = len(r_vecs)
-    reject = 0
-    for j in range(num_particles):
-      s1 = r_vecs[j]
-      if s1[2] < 0:
-	print "rejected time step"
-	reject = 1
-	return reject
-      
-    return reject, reject

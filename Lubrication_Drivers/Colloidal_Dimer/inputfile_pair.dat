@@ -39,4 +39,4 @@ output_name                              /fhd/bsprinkle/Lubrication_Two_Sphere/T
 
 # Load rigid bodies configuration, provide
 # *.vertex and *.clones files
-structure Structures/blob.vertex	Reject_Test_2.clones #RFD_Smooth.clones #Structures/pair_test.clones #./Two_Sphere_MCMC_1.clones #./Two_Sphere_Overlap.clones #
+structure ./blob.vertex	Reject_Test_2.clones #RFD_Smooth.clones #Structures/pair_test.clones #./Two_Sphere_MCMC_1.clones #./Two_Sphere_Overlap.clones #

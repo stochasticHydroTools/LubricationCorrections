@@ -44,11 +44,16 @@ class Lubrication
 Lubrication::Lubrication(double d_cut)
 {
   debye_cut = d_cut;
-  SetMemberData("/home/bs162/LubricationCorrection/RigidMultiblobsWallLubrication/Lubrication/Resistance_Coefs/mob_scalars_WS.txt",mob_scalars_WS_11,mob_scalars_WS_12,WS_x);
-  SetMemberData("/home/bs162/LubricationCorrection/RigidMultiblobsWallLubrication/Lubrication/Resistance_Coefs/res_scalars_JO.txt",mob_scalars_JO_11,mob_scalars_JO_12,JO_x);
-  SetMemberDataWall("/home/bs162/LubricationCorrection/RigidMultiblobsWallLubrication/Lubrication/Resistance_Coefs/mob_scalars_wall_MB_2562_eig_thresh.txt",mob_scalars_wall_2562,Wall_2562_x,true);
-  SetMemberData("/home/bs162/LubricationCorrection/RigidMultiblobsWallLubrication/Lubrication/Resistance_Coefs/res_scalars_MB_1.txt",mob_scalars_MB_11,mob_scalars_MB_12,MB_x);
-  SetMemberDataWall("/home/bs162/LubricationCorrection/RigidMultiblobsWallLubrication/Lubrication/Resistance_Coefs/res_scalars_wall_MB.txt",mob_scalars_wall_MB,Wall_MB_x,false);
+  std::string base_dir = __FILENAME__;
+//   std::cout << "++++++++++++++++++++++++++++\n";
+//   std::cout << base_dir << "\n";
+//   std::cout << base_dir+"/Resistance_Coefs/mob_scalars_WS.txt" << "\n";
+//   std::cout << "++++++++++++++++++++++++++++\n";
+  SetMemberData(base_dir+"/Resistance_Coefs/mob_scalars_WS.txt",mob_scalars_WS_11,mob_scalars_WS_12,WS_x);
+  SetMemberData(base_dir+"/Resistance_Coefs/res_scalars_JO.txt",mob_scalars_JO_11,mob_scalars_JO_12,JO_x);
+  SetMemberDataWall(base_dir+"/Resistance_Coefs/mob_scalars_wall_MB_2562_eig_thresh.txt",mob_scalars_wall_2562,Wall_2562_x,true);
+  SetMemberData(base_dir+"/Resistance_Coefs/res_scalars_MB_1.txt",mob_scalars_MB_11,mob_scalars_MB_12,MB_x);
+  SetMemberDataWall(base_dir+"/Resistance_Coefs/res_scalars_wall_MB.txt",mob_scalars_wall_MB,Wall_MB_x,false);
 }
 
 void Lubrication::SetMemberData(std::string fname, std::vector< std::vector<double> >& vec_11, std::vector< std::vector<double> >& vec_12, std::vector<double>& x)
