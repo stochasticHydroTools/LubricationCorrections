@@ -9,6 +9,8 @@ In Ubuntu 18, this can be accomplished by running
 
 In addition, the following python packages must be installed via pip
 
-```pip install --user scipy
+```
+pip install --user scipy
 pip install --user pyamg
-pip install --user scikit-sparse```
+pip install --user scikit-sparse
+```
