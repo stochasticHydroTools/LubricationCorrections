@@ -45,3 +45,13 @@ to relect the location of the Eigen `Include` directory on your system.
 NOT TESTED:
 If python3 is to be used, change to `-lboost_python3 -lboost_numpy3` in line
 https://github.com/stochasticHydroTools/LubricationCorrections/blob/eb60857f0899393958628d1ee223733d567409b9/Lubrication/Makefile#L26
+
+## Test
+To test the the C++ helper function run properly, simply run 
+```
+python test.py 
+```
+after a sucessful `make` in the `/Lubrication` directory. If this code produces output, 
+then things are working as they should. 
+
+
