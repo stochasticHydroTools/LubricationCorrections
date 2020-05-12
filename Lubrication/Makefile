@@ -23,10 +23,9 @@ TARGET = Lubrication_Class
 all: $(TARGET).so
 
 $(TARGET).so: $(TARGET).o
-	g++ -O3 -shared  -dynamiclib $(TARGET).o -L$(BOOST_LIB)  -lboost_python -L$(PYTHON_LIB) -lpython$(PYTHON_VERSION) -o $(TARGET).so
+	g++ -O3 -shared  -dynamiclib $(TARGET).o -L$(BOOST_LIB)  -lboost_python -lboost_numpy -L$(PYTHON_LIB) -lpython$(PYTHON_VERSION) -o $(TARGET).so
 
 $(TARGET).o: $(TARGET).cc
 	g++ -O3 -std=c++11 -I$(PYTHON_INCLUDE) -I$(BOOST_INC) -I$(EIGEN_INC) $(CXX_FLAGS) -fPIC -c $(TARGET).cc
-
 clean: 
 	rm -f $(TARGET).o $(TARGET).so
