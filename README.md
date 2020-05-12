@@ -34,7 +34,7 @@ Change lines
 
 https://github.com/stochasticHydroTools/LubricationCorrections/blob/eb60857f0899393958628d1ee223733d567409b9/Lubrication/Makefile#L9-L10
 
-to reflect the location of Boost on your system, and cange line
+to reflect the location of Boost on your system, and change line
 
 
 https://github.com/stochasticHydroTools/LubricationCorrections/blob/eb60857f0899393958628d1ee223733d567409b9/Lubrication/Makefile#L12
