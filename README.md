@@ -30,10 +30,15 @@ https://github.com/stochasticHydroTools/LubricationCorrections/tree/master/Lubri
 To ensure the `Makefile` functions properly, 
 
 Change lines 
+
+
 https://github.com/stochasticHydroTools/LubricationCorrections/blob/eb60857f0899393958628d1ee223733d567409b9/Lubrication/Makefile#L9-L10
 
 to reflect the location of Boost on your system, and cange line
+
+
 https://github.com/stochasticHydroTools/LubricationCorrections/blob/eb60857f0899393958628d1ee223733d567409b9/Lubrication/Makefile#L12
+
 
 to relect the location of the Eigen `Include` directory on your system.
 
