@@ -7,6 +7,10 @@ In order to run the code, the SuiteSparse library must be installed on the syste
 In Ubuntu 18, this can be accomplished by running
 `sudo apt install libsuitesparse-dev`
 
+Additionally, the C++ libraries `Boost` and `Eigen` must be installed
+Ensure that the verion of boost is 
+
+
 In addition, the following python packages must be installed via pip
 
 ```
