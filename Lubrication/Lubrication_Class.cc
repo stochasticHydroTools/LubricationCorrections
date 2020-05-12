@@ -7,8 +7,10 @@
 #include <iomanip>
 #include <Eigen/Dense>
 #include <boost/python.hpp>
+#include "boost/python/numpy.hpp"
 
 namespace bp = boost::python;
+namespace bn = boost::python::numpy;
 
 class Lubrication
 {
@@ -34,15 +36,17 @@ class Lubrication
   Eigen::MatrixXd WallResistMatrixMB(double r_norm, double mob_factor[3], std::vector< double >& x, const std::vector< std::vector< double > >& vec);
   Eigen::MatrixXd  ResistPairMB(double r_norm, double mob_factor[3], Eigen::Vector3d r_hat);
   public:
-  void ResistPairSup_py(double r_norm, double a, double eta, bp::numeric::array r_hat);
-  void ResistCOO(bp::list r_vectors, bp::list n_list, double a, double eta, double cutoff, double wall_cutoff, bp::numeric::array periodic_length, bool Sup_if_true, bp::list data, bp::list rows, bp::list cols);
-  void ResistCOO_wall(bp::list r_vectors, double a, double eta, double wall_cutoff, bp::numeric::array periodic_length, bool Sup_if_true, bp::list data, bp::list rows, bp::list cols);
+  void ResistPairSup_py(double r_norm, double a, double eta, bn::ndarray r_hat);
+  void ResistCOO(bp::list r_vectors, bp::list n_list, double a, double eta, double cutoff, double wall_cutoff, bn::ndarray periodic_length, bool Sup_if_true, bp::list data, bp::list rows, bp::list cols);
+  void ResistCOO_wall(bp::list r_vectors, double a, double eta, double wall_cutoff, bn::ndarray periodic_length, bool Sup_if_true, bp::list data, bp::list rows, bp::list cols);
   double debye_cut;
   Lubrication(double d_cut);
 };
 
 Lubrication::Lubrication(double d_cut)
 {
+  Py_Initialize();
+  bn::initialize();
   debye_cut = d_cut;
   std::string base_dir = __FILENAME__;
 //   std::cout << "++++++++++++++++++++++++++++\n";
@@ -544,7 +548,7 @@ Eigen::MatrixXd Lubrication::ResistPairMB(double r_norm, double mob_factor[3], E
     return R;
 }
 
-void Lubrication::ResistPairSup_py(double r_norm, double a, double eta, bp::numeric::array r_hat)
+void Lubrication::ResistPairSup_py(double r_norm, double a, double eta, bn::ndarray r_hat)
 {
     Eigen::Vector3d r_hat_E; 
     r_hat_E << bp::extract<double>(r_hat[0]), bp::extract<double>(r_hat[1]), bp::extract<double>(r_hat[2]);
@@ -555,11 +559,11 @@ void Lubrication::ResistPairSup_py(double r_norm, double a, double eta, bp::nume
 	{std::cout << r_norm << "\n"; std::cout << R << std::endl; }
 }
 
-void Lubrication::ResistCOO(bp::list r_vectors, bp::list n_list, double a, double eta, double cutoff, double wall_cutoff, bp::numeric::array periodic_length, bool Sup_if_true, bp::list data, bp::list rows, bp::list cols)
+void Lubrication::ResistCOO(bp::list r_vectors, bp::list n_list, double a, double eta, double cutoff, double wall_cutoff, bn::ndarray periodic_length, bool Sup_if_true, bp::list data, bp::list rows, bp::list cols)
 {
   int num_bodies = bp::len(r_vectors);
   double mob_factor[3] = {(6.0*M_PI*eta*a), (6.0*M_PI*eta*a*a), (6.0*M_PI*eta*a*a*a)};
-  bp::numeric::array L = bp::extract<bp::numeric::array>(periodic_length);  
+  bn::ndarray L = bp::extract<bn::ndarray>(periodic_length);  
   int k, num_neighbors;
   Eigen::Vector3d r_jk, r_hat;
   double r_norm, height;
@@ -569,7 +573,7 @@ void Lubrication::ResistCOO(bp::list r_vectors, bp::list n_list, double a, doubl
   
   for(int j = 0; j < num_bodies; j++)
   {
-    bp::numeric::array r_j = bp::extract<bp::numeric::array>(r_vectors[j]);
+    bn::ndarray r_j = bp::extract<bn::ndarray>(r_vectors[j]);
     
     height = bp::extract<double>(r_j[2]);
     height /= a;
@@ -608,7 +612,7 @@ void Lubrication::ResistCOO(bp::list r_vectors, bp::list n_list, double a, doubl
       {
 	k = bp::extract<int>(neighbors[k_ind]);
 	
-	bp::numeric::array r_k = bp::extract<bp::numeric::array>(r_vectors[k]);
+	bn::ndarray r_k = bp::extract<bn::ndarray>(r_vectors[k]);
 	for(int l = 0; l < 3; ++l)
 	{
 	  r_jk[l] = (bp::extract<double>(r_j[l]) - bp::extract<double>(r_k[l]));
@@ -692,11 +696,11 @@ void Lubrication::ResistCOO(bp::list r_vectors, bp::list n_list, double a, doubl
   
 }
 
-void Lubrication::ResistCOO_wall(bp::list r_vectors, double a, double eta, double wall_cutoff, bp::numeric::array periodic_length, bool Sup_if_true, bp::list data, bp::list rows, bp::list cols)
+void Lubrication::ResistCOO_wall(bp::list r_vectors, double a, double eta, double wall_cutoff, bn::ndarray periodic_length, bool Sup_if_true, bp::list data, bp::list rows, bp::list cols)
 {
   int num_bodies = bp::len(r_vectors);
   double mob_factor[3] = {(6.0*M_PI*eta*a), (6.0*M_PI*eta*a*a), (6.0*M_PI*eta*a*a*a)};
-  bp::numeric::array L = bp::extract<bp::numeric::array>(periodic_length);  
+  bn::ndarray L = bp::extract<bn::ndarray>(periodic_length);  
   double r_norm, height;
   Eigen::MatrixXd R_wall;
   double R_val;
@@ -704,7 +708,7 @@ void Lubrication::ResistCOO_wall(bp::list r_vectors, double a, double eta, doubl
   
   for(int j = 0; j < num_bodies; j++)
   {
-    bp::numeric::array r_j = bp::extract<bp::numeric::array>(r_vectors[j]);
+    bn::ndarray r_j = bp::extract<bn::ndarray>(r_vectors[j]);
     
     height = bp::extract<double>(r_j[2]);
     height /= a;
@@ -740,9 +744,9 @@ void Lubrication::ResistCOO_wall(bp::list r_vectors, double a, double eta, doubl
 
 BOOST_PYTHON_MODULE(Lubrication_Class)
 {
-  using namespace boost::python;
-  boost::python::numeric::array::set_module_and_type("numpy", "ndarray");
-  class_<Lubrication>("Lubrication",init<double>())
+  //using namespace boost::python;
+  //boost::python::numeric::array::set_module_and_type("numpy", "ndarray");
+  bp::class_<Lubrication>("Lubrication",bp::init<double>(bp::args("d_cut"))) //
       .def("ResistCOO",&Lubrication::ResistCOO)
       .def("ResistCOO_wall",&Lubrication::ResistCOO_wall)
       .def("ResistPairSup_py",&Lubrication::ResistPairSup_py);
