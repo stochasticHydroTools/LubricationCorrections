@@ -15,4 +15,8 @@ pip install --user pyamg
 pip install --user scikit-sparse
 ```
 To run the code, one needs to `Make` the C++ helper code in the directory `/Lubrication`
-`https://github.com/stochasticHydroTools/LubricationCorrections/tree/master/Lubrication`
+
+
+```
+https://github.com/stochasticHydroTools/LubricationCorrections/tree/master/Lubrication
+```
