@@ -8,8 +8,13 @@ In Ubuntu 18, this can be accomplished by running
 `sudo apt install libsuitesparse-dev`
 
 Additionally, the C++ libraries `Boost` and `Eigen` must be installed
-Ensure that the verion of boost is 
+Ensure that the verion of Boost is `>= 1.64`
 
+In Ubuntu 18, these libraries can be installed by running, e.g.
+```
+sudo apt install libeigen3-dev
+sudo apt install libboost1.67-all-dev
+```
 
 In addition, the following python packages must be installed via pip
 
@@ -19,8 +24,19 @@ pip install --user pyamg
 pip install --user scikit-sparse
 ```
 To run the code, one needs to `Make` the C++ helper code in the directory `/Lubrication`
-
-
 ```
 https://github.com/stochasticHydroTools/LubricationCorrections/tree/master/Lubrication
 ```
+To ensure the `Makefile` functions properly, 
+
+Change lines 
+https://github.com/stochasticHydroTools/LubricationCorrections/blob/eb60857f0899393958628d1ee223733d567409b9/Lubrication/Makefile#L9-L10
+
+to reflect the location of Boost on your system, and cange line
+https://github.com/stochasticHydroTools/LubricationCorrections/blob/eb60857f0899393958628d1ee223733d567409b9/Lubrication/Makefile#L12
+
+to relect the location of the Eigen `Include` directory on your system.
+
+NOT TESTED:
+If python3 is to be used, change to `-lboost_python3 -lboost_numpy3` in line
+https://github.com/stochasticHydroTools/LubricationCorrections/blob/eb60857f0899393958628d1ee223733d567409b9/Lubrication/Makefile#L26
